@@ -2,26 +2,37 @@
 function usage()
 {
     
-    echo "ipmi_function version 1.01  Copyright (C) zhaoec(2020-03-02), capitalonline"
-    echo "2020-03-02 version 1.01: R540 R640 R740"
-    echo "USAGE: $0 [OPTIONS] < add_bmc_user|submit_onetime|vnc_control | bios_update | idrac_update |vnc_config|mail_alarm|snmp_alarm|performance_config|boot_set|numa_config|pxe_config|alarm_config|boot_config|get_sn|single_sn|get_mac|get_all_mac|config_raid|power_status|change_timezone|power_off|power_on|hardreset|delete_bmc_user > <password>"
-    echo ""
-    echo "Available OPTIONS:"
-    echo ""
-    echo "  --ipaddr       <ipaddr>   ip. "
-    echo "  --ip_file      <ip_file>   ip list. "
-    echo "  --username     <username>   BMC admin user name "
-    echo "  --userpassword <userpassword>   BMC admin password "
-    echo "  --boot_type    <boot_type>   BIOS boot type Bios Uefi "
-    echo "  --flag_type    <flag_type>   flag type  get set "
-    echo "  -h, --help      Show the help message."
-    echo "  1 is wrong username "
-    echo "  2 is wrong password "
-    echo "  3 is wrong ip address "
-    echo ""
-    echo " compatible bios version including 2.2.11 | 2.5.4"
-    echo " compatible idrac version including 3.34.34.34 | 4.10.10.10"
-    echo " compatible nics type including 4 nics | 4 nics + 2 sub-nics"
+    echo """
+    ipmi_function version 1.01  Copyright (C) duyt(2021-05-26), capitalonline
+    2021-05-26 version 1.01: Huawei Taishan Server
+    USAGE: $0 [OPTIONS] < add_bmc_user | submit_onetime | vnc_control | bios_update  |
+          | idrac_update | vnc_config | mail_alarm | snmp_alarm | performance_config |
+          | boot_set | numa_config | pxe_config | alarm_config |boot_config | get_sn |
+          | single_sn | get_mac | get_all_mac | config_raid | power_status | 
+          | change_timezone | power_off | power_on | hardreset | delete_bmc_user > <password>
+    
+    Available OPTIONS:
+    
+      --ipaddr       <ipaddr>   ip.
+      --ip_file      <ip_file>   ip list.
+      --username     <username>   BMC admin user name
+      --userpassword <userpassword>   BMC admin password
+      --boot_type    <boot_type>   BIOS boot type Bios Uefi
+      --flag_type    <flag_type>   valid flag type   
+            none        : No override
+            force_pxe   : Force PXE boot
+            force_disk  : Force boot from default Hard-drive
+            force_safe  : Force boot from default Hard-drive, request Safe Mode
+            force_diag  : Force boot from Diagnostic Partition
+            force_cdrom : Force boot from CD/DVD
+            force_bios  : Force boot into BIOS Setup
+      -h, --help      Show the help message.
+
+      if error occurs, please check username & password & hostIP & syntax
+    
+    compatible bios version including 2.2.11 | 2.5.4
+    compatible ibmc version including 3.34.34.34 | 4.10.10.10
+    compatible nics type including 4 nics | 4 nics + 2 sub-nics"""
     exit 1
 }
 
@@ -128,14 +139,15 @@ function is_valid_action()
 parse_options $@
 
 is_valid_action ${action} || echo "invalid action"
+
 path=`dirname $0`
 
 Product_Name=`ipmitool -U $name -P $password -H $ipaddr -I lanplus  fru  |grep "Product Manufacturer" |awk '{print  $4}' | sed -n '1p'`
 
-
 if [[ $Product_Name == '' ]]; then
-        /opt/dell/srvadmin/sbin/racadm -r $ipaddr -u $name  -p $password set iDRAC.IPMILan.Enable Enabled
-        Product_Name=`ipmitool -U $name -P $password -H $ipaddr -I lanplus  fru  |grep "Product Manufacturer" |awk '{print  $4}' | sed -n '1p'`
+        #/opt/dell/srvadmin/sbin/racadm -r $ipaddr -u $name  -p $password set iDRAC.IPMILan.Enable Enabled
+        echo "IPMIservice may have an error, please check"
+        #Product_Name=`ipmitool -U $name -P $password -H $ipaddr -I lanplus  fru  |grep "Product Manufacturer" |awk '{print  $4}' | sed -n '1p'`
 fi
 
 ipmitool -U $name -P $password -H $ipaddr -I lanplus chassis power status 1>/dev/null 2>&1
@@ -168,10 +180,10 @@ esac
 
 case "${action}" in
     add_bmc_user)
-	    add_bmc_user $ipaddr $name $password $username $userpassword $flag_type
+	    add_bmc_user $ipaddr $name $password $username $userpassword
         ;;
     vnc_config)
-        vnc_config $ipaddr $name $password $vnc_password $flag_type
+        vnc_config $ipaddr $name $password $vnc_password
         ;;
     bios_update)
         bios_update $ipaddr $name $password $update_file $is_restart $file_path
@@ -180,28 +192,28 @@ case "${action}" in
 		idrac_update $ipaddr $name $password $update_file $file_path
 		;;
 	mail_alarm)
-        mail_alarm $ipaddr $name $password $flag_type
+        mail_alarm $ipaddr $name $password
         ;;
     snmp_alarm)
-        snmp_alarm $ipaddr $name $password $flag_type
+        snmp_alarm $ipaddr $name $password
         ;;
     performance_config)
-        performance_config $ipaddr $name $password $flag_type
+        performance_config $ipaddr $name $password
         ;;
     boot_set)
-        boot_set $ipaddr $name $password $boot_type $flag_type
+        boot_set $ipaddr $name $password $boot_type
         ;;
     numa_config )
-        numa_config $ipaddr $name $password $flag_type
+        numa_config $ipaddr $name $password
         ;;
     pxe_config )
-        pxe_config $ipaddr $name $password $pxe_device $flag_type
+        pxe_config $ipaddr $name $password $pxe_device
         ;;
     alarm_config)
-        alarm_config $ipaddr $name $password $flag_type
+        alarm_config $ipaddr $name $password
         ;;
     submit_onetime)
-    	submit_onetime $ipaddr $name $password $pxe_device $flag_type
+    	submit_onetime $ipaddr $name $password $pxe_device
         ;;
     vnc_control)
     	vnc_control $ipaddr $name $password
@@ -210,22 +222,22 @@ case "${action}" in
         boot_config $ipaddr $name $password $flag_type
         ;;
     get_sn)
-        get_sn $ipaddr $name $password $flag_type
+        get_sn $ipaddr $name $password
         ;;
     single_sn)
-        single_sn $ipaddr $name $password $flag_type
+        single_sn $ipaddr $name $password
         ;;
     get_mac )
-        get_mac $ipaddr $name $password $flag_type
+        get_mac $ipaddr $name $password
         ;;
     get_all_mac )
-        get_all_mac $ipaddr $name $password $flag_type
+        get_all_mac $ipaddr $name $password
         ;;
     get_pxe_mac )
-        get_pxe_mac $ipaddr $name $password $flag_type
+        get_pxe_mac $ipaddr $name $password
         ;;
     config_raid)
-        config_raid $ipaddr $name $password $raid_type $disk_list $flag_type
+        config_raid $ipaddr $name $password $raid_type $disk_list
         ;;
     power_status)
         power_status $ipaddr $name $password 
@@ -243,7 +255,7 @@ case "${action}" in
         hardreset $ipaddr $name $password 
         ;;
     delete_bmc_user)
-        delete_bmc_user $ipaddr $name $password $username $flag_type
+        delete_bmc_user $ipaddr $name $password $username
         ;;
     *)
         echo "Unknown Action:${action}!"

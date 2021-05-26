@@ -16,7 +16,9 @@ function one_node_test()
     sh -x   ./ipmi_function.sh  pxe_config $2 $3  --ipaddr=$1 --pxe_device 
     sh -x   ./ipmi_function.sh  alarm_config $2 $3  --ipaddr=$1 
     sh -x   ./ipmi_function.sh  boot_config $2 $3  --ipaddr=$1 
-    sh -x   ./ipmi_function.sh  single_sn $2 $3  --ipaddr=$1 
+    sh -x   ./ipmi_function.sh  get_sn $2 $3  --ipaddr=$1
+    sh -x   ./ipmi_function.sh  single_sn $2 $3  --ipaddr=$1
+    sh -x   ./ipmi_function.sh  get_mac $2 $3  --ipaddr=$1 
     sh -x   ./ipmi_function.sh  get_all_mac $2 $3  --ipaddr=$1 
     sh -x   ./ipmi_function.sh  config_raid $2 $3  --ipaddr=$1 --raid_type --disk_list 
     sh -x   ./ipmi_function.sh  power_status $2 $3  --ipaddr=$1 
