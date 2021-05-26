@@ -1,0 +1,203 @@
+华为服务器测试
+
+
+管理机 ：114.112.41.121  root/cds-china@2018       测试机器华为ARM 服务器带外： 10.128.205.74   Administrator Admin@9000
+
+华为iBMC手册说明书
+https://support.huawei.com/enterprise/zh/doc/EDOC1100121687/5cc75d1c
+
+dell RACADM CLI Guide
+https://www.dell.com/support/manuals/en-en/poweredge-r7525/idrac_4.00.00.00_racadm/ifcracmnoshostname-read-only
+
+RACADM for LINUX
+https://www.dell.com/support/home/en-us/drivers/driversdetails?driverid=kpxwd&oscode=rhe70&productcode=poweredge-r740
+
+
+服务器导入测试标准
+function_cds_add_bmc_user(√)   使用iBMC命令关闭密码复杂度
+function_cds_vnc_config(×) 	   Error setting SOL parameter 'volatile-bit-rate' to '115.2': Invalid command on LUN
+function_cds_bios_update() 
+function_cds_idrac_update()
+function_cds_mail_alarm()
+function_cds_snmp_alarm()
+function_cds_performance_config()
+function_cds_boot_set(×) unsupported
+function_cds_numa_config()
+function_cds_pxe_config()
+function_cds_alarm_config(√) unsupported
+function_cds_submit_onetime()
+function_cds_vnc_control(×) 使用ipmi开启vnc就退不出来了
+function_cds_boot_config()
+function_cds_get_sn(√)							#获取所有部件的SN
+function_cds_single_sn(√)                       #获取主板的SN
+function_cds_get_mac(√)							#获取管理网口mac	
+function_cds_get_all_mac(√)   使用iBMC命令可获取
+function_cds_get_pxe_mac()
+function_cds_config_raid()
+function_cds_power_status(√)
+function_cds_power_off(√)
+function_cds_power_on(√)
+function_cds_hardreset(√)
+function_cds_change_timezone(√)  使用iBMC可更改
+function_cds_delete_bmc_user(√)
+
+function_cds_add_bmc_user       
+目的：添加bmc账户
+
+
+
+
+$ipmitool_commd  user set name $i $4
+$ipmitool_commd  user set password $i $5
+$ipmitool_commd  user priv $i 4 1
+$ipmitool_commd sol payload enable 1 $i
+$ipmitool_commd  channel  setaccess 1 $i ipmi=on
+$ipmitool_commd  user enable $i
+$ipmitool_commd  raw 0x32 0xA3 0x0$i 0x01 0x00 0x00 0x00
+$ipmitool_commd  user list |grep "$4"
+
+
+
+
+function_cds_delete_bmc_user      
+
+$ipmitool_commd user set name 4 ""
+
+
+
+function_cds_vnc_config
+
+$ipmitool_commd sol set enabled true 1
+$ipmitool_commd sol payload enable 1 2
+$ipmitool_commd sol set volatile-bit-rate 115.2
+$ipmitool_commd sol set non-volatile-bit-rate 115.2     #设置波特率
+$ipmitool_commd sol info |grep  115.2
+
+
+function function_cds_mail_alarm
+
+
+
+
+
+
+function_cds_snmp_alarm
+简单网络管理协议，enable，改成SNMPv2，设置一个目的IP
+
+
+
+
+function_cds_performance_config
+输出各个硬件性能的表格
+
+
+
+
+
+function_cds_boot_set
+根据对应的参数写一个配置和验证，switch
+
+
+
+
+
+function_cds_numa_config     # disable numa？
+只要可以disable或enable就行
+
+
+
+
+function_cds_pxe_config
+设置pxe启动然后确认能pxe启动
+
+
+
+
+function_cds_alarm_config
+？？？
+
+
+
+
+
+function_cds_boot_config
+
+
+
+
+
+
+function_cds_get_sn       √
+
+ipmcget -d version
+Active iBMC    Version:           (U68)5.96
+BIOS           Version:           (U75)1.70
+
+
+function_cds_get_mac     √
+
+mac=`$ipmitool_commd lan print | grep -w "MAC Address" | awk '{print $4}'`
+
+
+function_cds_get_all_mac
+所有网卡的mac
+
+
+
+function_cds_get_pxe_mac
+pxe设备的mac
+
+
+
+
+function_cds_config_raid                     # 现在还没raid卡
+# 必须满足如下任一条件方可执行此命令：
+# RAID卡支持iBMC带外管理。您可以从RAID控制卡用户指南的“技术规格”章节中查询该RAID卡是否支持iBMC带外管理。
+# 服务器OS侧已安装并运行iBMA 2.0。
+
+ipmcget -t storage -d ctrlinfo -v all   #查看所有raid卡信息
+
+
+
+function_cds_power_status       √
+
+$ipmitool_commd  power status |awk '{print $4}'
+
+
+
+function_cds_power_off          √
+
+$ipmitool_commd  power off
+
+
+
+function_cds_power_on            √
+
+$ipmitool_commd  power on
+
+
+function_cds_hardreset           √
+
+$ipmitool_commd  power reset
+
+
+
+function_cds_change_timezone
+NTP和直接改都行
+ipmcset -d timezone -v Asia/Shanghai
+
+
+function_cds_bios_update
+系统bios升级
+
+
+
+function_cds_single_sn      √
+
+sn=`$ipmitool_commd fru | grep -w "Product Serial" | head -1 | awk '{print $4}'`
+
+
+function_cds_vnc_control
+
+ipmcget -t vnc -d info
+
