@@ -26,13 +26,14 @@ function timezone()
 hostname=$1
 user=$2
 passwd=$3
+tz=$4
 get='ipmcget -d time'
 set='ipmcset -d timezone'
 expect<<-EOF
 spawn ssh ${user}@${hostname}
 expect "*password:" { send "${passwd}\r" }
 expect "*->*"
-send "${set} -v Asia/Shanghai\r"
+send "${set} -v ${tz}\r"
 expect "*successfully*" { send "${get}\r" }
 expect eof
 EOF
@@ -285,6 +286,7 @@ function power_status()
     ipmitool_commd="ipmitool -U $2 -P $3 -H $1 -I lanplus"
     status=`$ipmitool_commd  power status |awk '{print $4}'`
     echo "host ip: $1  date: $date_info  result: power status: $status" >> $log_file
+}
 
 function power_off()
 {
@@ -409,7 +411,13 @@ function hardreset()
 function change_timezone()
 {
     echo "==== change timezone test ==== " >> $log_file
-    timezone $1 $2 $3 | grep Shanghai
+    if [[ $4 == '' ]]; then
+        default='Asia/Shanghai'
+    else
+        default=$4
+    fi
+    timezone $1 $2 $3 $default | grep $default
+
     if [[ $? == 0 ]]; then
         echo "host ip: $1  date: $date_info  result: change timezone success" >> $log_file
     else
@@ -425,7 +433,7 @@ function delete_bmc_user()
     $ipmitool_commd user list | grep "$4"
     if [[ $? == 0 ]]; then
         user=`$ipmitool_commd user list | grep "$4" | awk '{print $2}'`
-        l=`$ipmitool_commd user list | grep usera | awk '{print $1}'`
+        l=`$ipmitool_commd user list | grep $user | awk '{print $1}'`
         while [[ $user != "" ]]
         do
             $ipmitool_commd  user set name $l ""
